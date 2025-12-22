@@ -4,6 +4,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import PasswordChangeForm, UserCreationForm
 from django.contrib.auth.models import Group
+from django.core.validators import FileExtensionValidator
 from django.utils.translation import gettext_lazy as _
 
 from .models import Settings
@@ -89,3 +90,22 @@ class UserSettingsForm(forms.ModelForm):
             "timezone",
             "pagination_count",
         ]
+
+
+class RestoreForm(forms.Form):
+    """Form for uploading backup files to restore"""
+
+    backup_file = forms.FileField(
+        label=_("Backup File"),
+        help_text=_("Select a backup ZIP file to restore"),
+        validators=[FileExtensionValidator(allowed_extensions=["zip"])],
+        widget=forms.FileInput(attrs={"accept": ".zip"}),
+    )
+    clear_existing_data = forms.BooleanField(
+        label=_("Clear existing data before restore"),
+        required=False,
+        initial=False,
+        help_text=_(
+            "WARNING: This will delete all existing data before restoring the backup!"
+        ),
+    )

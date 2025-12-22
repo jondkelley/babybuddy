@@ -7,9 +7,9 @@ from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.views import LogoutView as LogoutViewBase
 from django.contrib.messages.views import SuccessMessageMixin
-from django.core.exceptions import BadRequest
+from django.core.exceptions import BadRequest, ValidationError
 from django.forms import Form
-from django.http import HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseForbidden
 from django.middleware.csrf import REASON_BAD_ORIGIN
 from django.shortcuts import redirect, render
 from django.template import loader
@@ -39,6 +39,7 @@ from django_filters.views import FilterView
 
 from babybuddy import forms
 from babybuddy.mixins import LoginRequiredMixin, PermissionRequiredMixin, StaffOnlyMixin
+from babybuddy.services import BackupService, RestoreService
 
 
 def csrf_failure(request, reason=""):
@@ -298,3 +299,152 @@ class Welcome(LoginRequiredMixin, TemplateView):
     """
 
     template_name = "babybuddy/welcome.html"
+
+
+class BackupDownloadView(LoginRequiredMixin, StaffOnlyMixin, View):
+    """
+    Generates and downloads a complete database backup as a ZIP file
+    """
+
+    def get(self, request):
+        try:
+            # Create backup service
+            backup_service = BackupService(request.user)
+
+            # Generate backup
+            backup_buffer = backup_service.create_backup()
+
+            # Generate filename
+            filename = backup_service.generate_filename()
+
+            # Create response
+            response = HttpResponse(
+                backup_buffer.getvalue(), content_type="application/zip"
+            )
+            response["Content-Disposition"] = f'attachment; filename="{filename}"'
+
+            messages.success(request, _("Backup created successfully."))
+            return response
+
+        except Exception as e:
+            messages.error(
+                request, _("Failed to create backup: %(error)s") % {"error": str(e)}
+            )
+            return redirect("babybuddy:backup-restore")
+
+
+class BackupRestoreView(LoginRequiredMixin, StaffOnlyMixin, View):
+    """
+    Main backup/restore page with upload form
+    """
+
+    template_name = "babybuddy/backup_restore.html"
+    form_class = forms.RestoreForm
+
+    def get(self, request):
+        return render(request, self.template_name, {"form": self.form_class()})
+
+    def post(self, request):
+        form = self.form_class(request.POST, request.FILES)
+
+        if form.is_valid():
+            try:
+                backup_file = request.FILES["backup_file"]
+
+                # Get metadata for confirmation
+                restore_service = RestoreService(request.user)
+                metadata = restore_service.get_backup_metadata(backup_file)
+
+                # Store file in session for confirmation step
+                request.session["backup_metadata"] = metadata
+                request.session["clear_existing_data"] = form.cleaned_data[
+                    "clear_existing_data"
+                ]
+
+                # Save uploaded file temporarily
+                # Note: In production, consider using a more secure temporary storage
+                backup_file.seek(0)
+                request.session["backup_file_name"] = backup_file.name
+
+                # Redirect to confirmation page
+                return render(
+                    request,
+                    "babybuddy/restore_confirm.html",
+                    {
+                        "metadata": metadata,
+                        "clear_existing_data": form.cleaned_data[
+                            "clear_existing_data"
+                        ],
+                        "backup_file": backup_file,
+                    },
+                )
+
+            except ValidationError as e:
+                messages.error(request, str(e))
+            except Exception as e:
+                messages.error(
+                    request,
+                    _("Failed to process backup file: %(error)s") % {"error": str(e)},
+                )
+
+        return render(request, self.template_name, {"form": form})
+
+
+class RestoreConfirmView(LoginRequiredMixin, StaffOnlyMixin, View):
+    """
+    Confirmation and execution of restore operation
+    """
+
+    def post(self, request):
+        try:
+            # Get backup file from request
+            if "backup_file" not in request.FILES:
+                messages.error(request, _("No backup file provided."))
+                return redirect("babybuddy:backup-restore")
+
+            backup_file = request.FILES["backup_file"]
+            clear_existing_data = request.POST.get("clear_existing_data") == "on"
+
+            # Perform restore
+            restore_service = RestoreService(request.user)
+            results = restore_service.restore_from_backup(
+                backup_file, clear_existing=clear_existing_data
+            )
+
+            if results["success"]:
+                messages.success(
+                    request,
+                    _(
+                        "Backup restored successfully. %(models)d models and %(records)d records restored."
+                    )
+                    % {
+                        "models": results["models_restored"],
+                        "records": results["records_restored"],
+                    },
+                )
+            else:
+                messages.warning(
+                    request,
+                    _(
+                        "Backup restored with errors. %(models)d models and %(records)d records restored."
+                    )
+                    % {
+                        "models": results["models_restored"],
+                        "records": results["records_restored"],
+                    },
+                )
+
+                # Show errors
+                for error in results["errors"]:
+                    messages.error(request, error)
+
+            return redirect("babybuddy:backup-restore")
+
+        except ValidationError as e:
+            messages.error(request, str(e))
+        except Exception as e:
+            messages.error(
+                request, _("Failed to restore backup: %(error)s") % {"error": str(e)}
+            )
+
+        return redirect("babybuddy:backup-restore")

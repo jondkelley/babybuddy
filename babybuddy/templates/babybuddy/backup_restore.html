@@ -1,0 +1,123 @@
+{% extends 'babybuddy/page.html' %}
+{% load i18n widget_tweaks %}
+
+{% block title %}
+    {% trans "Backup & Restore" %}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item">{% trans "Settings" %}</li>
+    <li class="breadcrumb-item active">{% trans "Backup & Restore" %}</li>
+{% endblock %}
+
+{% block content %}
+    <h1>{% trans "Database Backup & Restore" %}</h1>
+    
+    <div class="container-fluid">
+        <!-- Create Backup Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3>{% trans "Create Backup" %}</h3>
+            </div>
+            <div class="card-body">
+                <p>{% trans "Download a complete backup of all your Baby Buddy data as a ZIP file." %}</p>
+                <p class="text-muted">
+                    <small>
+                        {% trans "The backup will include all database records and will be named with the current date and time in your timezone." %}
+                    </small>
+                </p>
+                <a href="{% url 'babybuddy:backup-download' %}" class="btn btn-primary">
+                    <i class="icon-download"></i> {% trans "Download Backup" %}
+                </a>
+            </div>
+        </div>
+
+        <!-- Restore from Backup Section -->
+        <div class="card">
+            <div class="card-header">
+                <h3>{% trans "Restore from Backup" %}</h3>
+            </div>
+            <div class="card-body">
+                <p>{% trans "Upload a backup file to restore your data." %}</p>
+                
+                <div class="alert alert-warning" role="alert">
+                    <strong><i class="icon-attention"></i> {% trans "Warning" %}:</strong>
+                    {% trans "Restoring from a backup may overwrite existing data. Please ensure you have a current backup before proceeding." %}
+                </div>
+
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                        {% for error in form.non_field_errors %}
+                            <div class="alert alert-danger" role="alert">
+                                <strong>{% trans "Error" %}</strong>: {{ error }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <div class="form-group">
+                        <label for="{{ form.backup_file.id_for_label }}">
+                            {{ form.backup_file.label }}
+                        </label>
+                        {{ form.backup_file|add_class:"form-control-file" }}
+                        {% if form.backup_file.help_text %}
+                            <small class="form-text text-muted">{{ form.backup_file.help_text }}</small>
+                        {% endif %}
+                        {% if form.backup_file.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.backup_file.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group form-check">
+                        {{ form.clear_existing_data|add_class:"form-check-input" }}
+                        <label class="form-check-label" for="{{ form.clear_existing_data.id_for_label }}">
+                            {{ form.clear_existing_data.label }}
+                        </label>
+                        {% if form.clear_existing_data.help_text %}
+                            <small class="form-text text-muted">{{ form.clear_existing_data.help_text }}</small>
+                        {% endif %}
+                    </div>
+
+                    <button type="submit" class="btn btn-warning">
+                        <i class="icon-upload"></i> {% trans "Upload and Preview" %}
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Information Section -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h3>{% trans "Information" %}</h3>
+            </div>
+            <div class="card-body">
+                <h5>{% trans "About Backups" %}</h5>
+                <ul>
+                    <li>{% trans "Backups are stored in JSON format within a ZIP file" %}</li>
+                    <li>{% trans "Backups include all database records (children, feedings, sleep, etc.)" %}</li>
+                    <li>{% trans "Backups are compatible across different database types (SQLite, PostgreSQL, MySQL)" %}</li>
+                    <li>{% trans "File names include the date and time in your timezone (format: backup_MMDDYY_HHMMSS.zip)" %}</li>
+                </ul>
+
+                <h5 class="mt-3">{% trans "Restore Process" %}</h5>
+                <ul>
+                    <li>{% trans "Upload a backup file and preview its contents" %}</li>
+                    <li>{% trans "Choose whether to clear existing data before restoring" %}</li>
+                    <li>{% trans "Confirm the restore operation" %}</li>
+                    <li>{% trans "The restore process is atomic - if any error occurs, no changes will be made" %}</li>
+                </ul>
+
+                <h5 class="mt-3">{% trans "Best Practices" %}</h5>
+                <ul>
+                    <li>{% trans "Create regular backups of your data" %}</li>
+                    <li>{% trans "Store backups in a safe location" %}</li>
+                    <li>{% trans "Test your backups periodically to ensure they can be restored" %}</li>
+                    <li>{% trans "Always create a backup before performing a restore" %}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+{% endblock %}

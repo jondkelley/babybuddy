@@ -1,0 +1,111 @@
+{% extends 'babybuddy/page.html' %}
+{% load i18n %}
+
+{% block title %}
+    {% trans "Confirm Restore" %}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item">{% trans "Settings" %}</li>
+    <li class="breadcrumb-item"><a href="{% url 'babybuddy:backup-restore' %}">{% trans "Backup & Restore" %}</a></li>
+    <li class="breadcrumb-item active">{% trans "Confirm" %}</li>
+{% endblock %}
+
+{% block content %}
+    <h1>{% trans "Confirm Restore" %}</h1>
+    
+    <div class="container-fluid">
+        <div class="card">
+            <div class="card-header">
+                <h3>{% trans "Backup Information" %}</h3>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tbody>
+                        <tr>
+                            <th scope="row">{% trans "Backup Version" %}</th>
+                            <td>{{ metadata.version }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">{% trans "Created" %}</th>
+                            <td>{{ metadata.timestamp }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">{% trans "Created By" %}</th>
+                            <td>{{ metadata.created_by|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">{% trans "Database Engine" %}</th>
+                            <td>{{ metadata.database_engine }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">{% trans "Baby Buddy Version" %}</th>
+                            <td>{{ metadata.babybuddy_version }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">{% trans "Number of Models" %}</th>
+                            <td>{{ metadata.models_count }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">{% trans "Total Records" %}</th>
+                            <td>{{ metadata.total_records }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">{% trans "Timezone" %}</th>
+                            <td>{{ metadata.timezone }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="alert alert-danger mt-4" role="alert">
+            <h4 class="alert-heading"><i class="icon-attention"></i> {% trans "Warning" %}</h4>
+            <p>{% trans "You are about to restore data from this backup." %}</p>
+            {% if clear_existing_data %}
+                <p><strong>{% trans "All existing data will be deleted before restoring!" %}</strong></p>
+            {% else %}
+                <p>{% trans "This may overwrite existing records with the same IDs." %}</p>
+            {% endif %}
+            <hr>
+            <p class="mb-0">{% trans "This action cannot be undone. Please ensure you have a current backup before proceeding." %}</p>
+        </div>
+
+        <form method="post" action="{% url 'babybuddy:backup-restore-confirm' %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" name="backup_file_data" value="{{ backup_file_data }}">
+            {% if clear_existing_data %}
+                <input type="hidden" name="clear_existing_data" value="on">
+            {% endif %}
+            
+            <!-- Re-upload the file since we can't store it in session easily -->
+            <input type="file" name="backup_file" style="display: none;" id="backup_file_input">
+            
+            <div class="btn-group" role="group">
+                <button type="submit" class="btn btn-danger" onclick="return confirmRestore();">
+                    <i class="icon-ok"></i> {% trans "Confirm Restore" %}
+                </button>
+                <a href="{% url 'babybuddy:backup-restore' %}" class="btn btn-secondary">
+                    <i class="icon-cancel"></i> {% trans "Cancel" %}
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Store the file in a hidden input for resubmission
+        {% if backup_file %}
+        document.addEventListener('DOMContentLoaded', function() {
+            // Create a DataTransfer object to hold the file
+            const dataTransfer = new DataTransfer();
+            
+            // Note: We can't actually transfer the file object from the previous request
+            // So we need to handle this differently in the view
+        });
+        {% endif %}
+
+        function confirmRestore() {
+            return confirm('{% trans "Are you sure you want to restore this backup? This action cannot be undone." %}');
+        }
+    </script>
+{% endblock %}

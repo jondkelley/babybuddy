@@ -45,6 +45,9 @@ app_patterns = [
     path("user/settings/", views.UserSettings.as_view(), name="user-settings"),
     path("user/add-device/", views.UserAddDevice.as_view(), name="user-add-device"),
     path("settings/", include("dbsettings.urls")),
+    path("backup/", views.BackupRestoreView.as_view(), name="backup-restore"),
+    path("backup/download/", views.BackupDownloadView.as_view(), name="backup-download"),
+    path("backup/restore/confirm/", views.RestoreConfirmView.as_view(), name="backup-restore-confirm"),
 ]
 
 urlpatterns = [
