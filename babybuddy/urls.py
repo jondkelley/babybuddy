@@ -47,6 +47,7 @@ app_patterns = [
     path("settings/", include("dbsettings.urls")),
     path("backup/", views.BackupRestoreView.as_view(), name="backup-restore"),
     path("backup/download/", views.BackupDownloadView.as_view(), name="backup-download"),
+    path("backup/export/", views.DatabaseExportView.as_view(), name="database-export"),
     path("backup/restore/confirm/", views.RestoreConfirmView.as_view(), name="backup-restore-confirm"),
 ]
 
@@ -58,6 +59,7 @@ urlpatterns = [
     path("", include("core.urls", namespace="core")),
     path("", include("dashboard.urls", namespace="dashboard")),
     path("", include("reports.urls", namespace="reports")),
+    path("owlet/", include("owlet.urls", namespace="owlet")),
 ]
 
 if settings.DEBUG:  # pragma: no cover

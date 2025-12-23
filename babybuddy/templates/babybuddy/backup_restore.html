@@ -32,6 +32,24 @@
             </div>
         </div>
 
+        <!-- Database Export Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3>{% trans "Database Export" %}</h3>
+            </div>
+            <div class="card-body">
+                <p>{% trans "Export the entire database as a single JSON file for analysis or external processing." %}</p>
+                <p class="text-muted">
+                    <small>
+                        {% trans "The export will include all database records in a structured JSON format. Unlike the backup ZIP file, this is a single uncompressed JSON file containing all data." %}
+                    </small>
+                </p>
+                <a href="{% url 'babybuddy:database-export' %}" class="btn btn-info">
+                    <i class="icon-download"></i> {% trans "Export as JSON" %}
+                </a>
+            </div>
+        </div>
+
         <!-- Restore from Backup Section -->
         <div class="card">
             <div class="card-header">
@@ -100,6 +118,14 @@
                     <li>{% trans "Backups include all database records (children, feedings, sleep, etc.)" %}</li>
                     <li>{% trans "Backups are compatible across different database types (SQLite, PostgreSQL, MySQL)" %}</li>
                     <li>{% trans "File names include the date and time in your timezone (format: backup_MMDDYY_HHMMSS.zip)" %}</li>
+                </ul>
+
+                <h5 class="mt-3">{% trans "About Database Export" %}</h5>
+                <ul>
+                    <li>{% trans "Database exports are single JSON files containing all database records" %}</li>
+                    <li>{% trans "Exports are uncompressed and human-readable for easy analysis" %}</li>
+                    <li>{% trans "Use exports for data analysis, migration, or integration with external tools" %}</li>
+                    <li>{% trans "File names include the date and time in your timezone (format: database_export_MMDDYY_HHMMSS.json)" %}</li>
                 </ul>
 
                 <h5 class="mt-3">{% trans "Restore Process" %}</h5>

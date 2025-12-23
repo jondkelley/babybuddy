@@ -9,6 +9,10 @@ from .feeding_intervals import feeding_intervals  # NOQA
 from .feeding_pattern import feeding_pattern  # NOQA
 from .head_circumference_change import head_circumference_change  # NOQA
 from .height_change import height_change  # NOQA
+from .owlet_heart_rate import owlet_heart_rate  # NOQA
+from .owlet_oxygen import owlet_oxygen  # NOQA
+from .owlet_sleep_pattern import owlet_sleep_pattern  # NOQA
+from .owlet_sleep_totals import owlet_sleep_totals  # NOQA
 from .pumping_amounts import pumping_amounts  # NOQA
 from .sleep_pattern import sleep_pattern  # NOQA
 from .sleep_totals import sleep_totals  # NOQA

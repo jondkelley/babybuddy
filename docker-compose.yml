@@ -11,6 +11,7 @@ services:
     environment:
       - DJANGO_SETTINGS_MODULE=babybuddy.settings.base
       - SECRET_KEY=change-this-to-a-random-secret-key-in-production
+      - OWLET_POLL_TOKEN=${OWLET_POLL_TOKEN:-change-me}
       - ALLOWED_HOSTS=*
       - DB_ENGINE=django.db.backends.postgresql
       - DB_HOST=db
@@ -41,6 +42,21 @@ services:
       - media_data:/app/data/media:ro
     depends_on:
       - web
+
+  owlet-poller:
+    image: curlimages/curl:8.11.1
+    depends_on:
+      - web
+    environment:
+      - OWLET_POLL_TOKEN=${OWLET_POLL_TOKEN:-change-me}
+    entrypoint:
+      - sh
+      - -c
+      - |
+        while true; do \
+          curl -fsS -X POST -H "X-Owlet-Poll-Token: ${OWLET_POLL_TOKEN}" http://web:8000/api/owlet/poll || true; \
+          sleep 30; \
+        done
 
 volumes:
   media_data:

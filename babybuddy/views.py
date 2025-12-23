@@ -7,6 +7,7 @@ from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.views import LogoutView as LogoutViewBase
 from django.contrib.messages.views import SuccessMessageMixin
+from django.core import serializers
 from django.core.exceptions import BadRequest, ValidationError
 from django.forms import Form
 from django.http import HttpResponse, HttpResponseForbidden
@@ -14,7 +15,7 @@ from django.middleware.csrf import REASON_BAD_ORIGIN
 from django.shortcuts import redirect, render
 from django.template import loader
 from django.urls import reverse, reverse_lazy
-from django.utils import translation
+from django.utils import timezone, translation
 from django.utils.decorators import method_decorator
 from django.utils.text import format_lazy
 from django.utils.translation import gettext as _, gettext_lazy
@@ -448,3 +449,71 @@ class RestoreConfirmView(LoginRequiredMixin, StaffOnlyMixin, View):
             )
 
         return redirect("babybuddy:backup-restore")
+
+
+class DatabaseExportView(LoginRequiredMixin, StaffOnlyMixin, View):
+    """
+    Exports the entire database as a single JSON file
+    """
+
+    def get(self, request):
+        try:
+            # Create backup service to reuse the logic
+            backup_service = BackupService(request.user)
+
+            # Get all models
+            models = backup_service._get_all_models()
+
+            # Build complete JSON structure
+            export_data = {
+                "metadata": backup_service._create_metadata(),
+                "data": {}
+            }
+
+            # Serialize each model
+            for model in models:
+                model_label = f"{model._meta.app_label}.{model._meta.model_name}"
+
+                # Skip excluded models
+                if model_label in backup_service.EXCLUDED_MODELS:
+                    continue
+
+                # Serialize model data
+                try:
+                    queryset = model.objects.all()
+                    if queryset.exists():
+                        # Deserialize to get clean data structure
+                        serialized = serializers.serialize(
+                            "json",
+                            queryset,
+                            use_natural_foreign_keys=True,
+                            use_natural_primary_keys=False,
+                        )
+                        # Store in data structure
+                        export_data["data"][model_label] = json.loads(serialized)
+                except Exception as e:
+                    # Log error but continue
+                    print(f"Error exporting {model_label}: {e}")
+
+            # Generate filename
+            user_tz = backup_service._get_user_timezone()
+            import zoneinfo
+            user_tz_obj = zoneinfo.ZoneInfo(user_tz)
+            now = timezone.now().astimezone(user_tz_obj)
+            filename = f"database_export_{now.strftime('%m%d%y_%H%M%S')}.json"
+
+            # Create response
+            response = HttpResponse(
+                json.dumps(export_data, indent=2),
+                content_type="application/json"
+            )
+            response["Content-Disposition"] = f'attachment; filename="{filename}"'
+
+            messages.success(request, _("Database exported successfully."))
+            return response
+
+        except Exception as e:
+            messages.error(
+                request, _("Failed to export database: %(error)s") % {"error": str(e)}
+            )
+            return redirect("babybuddy:backup-restore")

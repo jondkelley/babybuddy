@@ -3,6 +3,7 @@ from django.views.generic.detail import DetailView
 
 from babybuddy.mixins import PermissionRequiredMixin
 from core import models
+from owlet import models as owlet_models
 
 from . import graphs
 
@@ -408,3 +409,75 @@ class WeightChangeChildGirlReport(WeightChangeChildReport):
         super(WeightChangeChildGirlReport, self).__init__(
             sex="girl", target_url="reports:report-weight-change-child-girl"
         )
+
+
+class OwletHeartRateChildReport(PermissionRequiredMixin, DetailView):
+    """
+    Graph of Owlet heart rate readings over time.
+    """
+
+    model = models.Child
+    permission_required = ("core.view_child",)
+    template_name = "reports/owlet_heart_rate.html"
+
+    def get_context_data(self, **kwargs):
+        context = super(OwletHeartRateChildReport, self).get_context_data(**kwargs)
+        child = context["object"]
+        readings = owlet_models.OwletReading.objects.filter(child=child)
+        if readings:
+            context["html"], context["js"] = graphs.owlet_heart_rate(readings)
+        return context
+
+
+class OwletOxygenChildReport(PermissionRequiredMixin, DetailView):
+    """
+    Graph of Owlet oxygen saturation readings over time.
+    """
+
+    model = models.Child
+    permission_required = ("core.view_child",)
+    template_name = "reports/owlet_oxygen.html"
+
+    def get_context_data(self, **kwargs):
+        context = super(OwletOxygenChildReport, self).get_context_data(**kwargs)
+        child = context["object"]
+        readings = owlet_models.OwletReading.objects.filter(child=child)
+        if readings:
+            context["html"], context["js"] = graphs.owlet_oxygen(readings)
+        return context
+
+
+class OwletSleepPatternChildReport(PermissionRequiredMixin, DetailView):
+    """
+    Graph of Owlet sleep/wake pattern based on movement data.
+    """
+
+    model = models.Child
+    permission_required = ("core.view_child",)
+    template_name = "reports/owlet_sleep_pattern.html"
+
+    def get_context_data(self, **kwargs):
+        context = super(OwletSleepPatternChildReport, self).get_context_data(**kwargs)
+        child = context["object"]
+        readings = owlet_models.OwletReading.objects.filter(child=child)
+        if readings:
+            context["html"], context["js"] = graphs.owlet_sleep_pattern(readings)
+        return context
+
+
+class OwletSleepTotalsChildReport(PermissionRequiredMixin, DetailView):
+    """
+    Graph of Owlet total sleep time per day based on movement data.
+    """
+
+    model = models.Child
+    permission_required = ("core.view_child",)
+    template_name = "reports/owlet_sleep_totals.html"
+
+    def get_context_data(self, **kwargs):
+        context = super(OwletSleepTotalsChildReport, self).get_context_data(**kwargs)
+        child = context["object"]
+        readings = owlet_models.OwletReading.objects.filter(child=child)
+        if readings:
+            context["html"], context["js"] = graphs.owlet_sleep_totals(readings)
+        return context

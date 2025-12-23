@@ -116,4 +116,24 @@ urlpatterns = [
         views.WeightChangeChildGirlReport.as_view(),
         name="report-weight-change-child-girl",
     ),
+    path(
+        "children/<str:slug>/reports/owlet/heart-rate/",
+        views.OwletHeartRateChildReport.as_view(),
+        name="report-owlet-heart-rate-child",
+    ),
+    path(
+        "children/<str:slug>/reports/owlet/oxygen/",
+        views.OwletOxygenChildReport.as_view(),
+        name="report-owlet-oxygen-child",
+    ),
+    path(
+        "children/<str:slug>/reports/owlet/sleep-pattern/",
+        views.OwletSleepPatternChildReport.as_view(),
+        name="report-owlet-sleep-pattern-child",
+    ),
+    path(
+        "children/<str:slug>/reports/owlet/sleep-totals/",
+        views.OwletSleepTotalsChildReport.as_view(),
+        name="report-owlet-sleep-totals-child",
+    ),
 ]

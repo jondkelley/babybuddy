@@ -1,0 +1,79 @@
+{% extends 'cards/base.html' %}
+{% load duration i18n %}
+{% block header %}
+    <a href="{% url "owlet:settings-list" %}">{% trans "Owlet Vitals" %}</a>
+{% endblock %}
+{% block title %}
+    {% if reading %}
+        {% if stale %}
+            <style>
+                @keyframes stale-blink {
+                    0%, 49% { opacity: 1; }
+                    50%, 99% { opacity: 0.3; }
+                }
+                .stale-indicator {
+                    animation: stale-blink 2s infinite;
+                }
+            </style>
+            <div class="text-danger stale-indicator">
+                <strong>{% trans "STALE" %}</strong>
+            </div>
+        {% endif %}
+    {% else %}
+        {% trans "No readings yet" %}
+    {% endif %}
+{% endblock %}
+{% block content %}
+    {% if reading %}
+        <div class="row">
+            <div class="col-6">
+                <div class="mb-2">
+                    <i class="icon-heart" aria-hidden="true"></i>
+                    <strong>{% trans "Heart Rate" %}:</strong><br>
+                    {% if reading.heart_rate_bpm %}
+                        <span class="{% if stale %}text-muted{% endif %}">{{ reading.heart_rate_bpm|floatformat:0 }} bpm</span>
+                    {% else %}
+                        <span class="text-muted">--</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="mb-2">
+                    <i class="icon-lungs" aria-hidden="true"></i>
+                    <strong>{% trans "Oxygen" %}:</strong><br>
+                    {% if reading.oxygen_saturation_pct %}
+                        <span class="{% if stale %}text-muted{% endif %}">{{ reading.oxygen_saturation_pct|floatformat:0 }}%</span>
+                    {% else %}
+                        <span class="text-muted">--</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-6">
+                <div class="mb-2">
+                    <i class="icon-activity" aria-hidden="true"></i>
+                    <strong>{% trans "Movement" %}:</strong><br>
+                    {% if reading.movement_value is not None %}
+                        <span class="{% if stale %}text-muted{% endif %}">{{ reading.movement_value }}</span>
+                    {% else %}
+                        <span class="text-muted">--</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="mb-2">
+                    <i class="icon-battery" aria-hidden="true"></i>
+                    <strong>{% trans "Battery" %}:</strong><br>
+                    {% if reading.battery_pct %}
+                        <span class="{% if stale %}text-muted{% endif %}">{{ reading.battery_pct|floatformat:0 }}%</span>
+                    {% else %}
+                        <span class="text-muted">--</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <p class="text-muted">{% trans "No Owlet device configured for this child." %}</p>
+    {% endif %}
+{% endblock %}

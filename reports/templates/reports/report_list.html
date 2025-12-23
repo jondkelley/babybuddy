@@ -54,6 +54,14 @@
                class="list-group-item list-group-item-action">{% trans "WHO Weight Percentiles for Boys in kg" %}</a>
             <a href="{% url 'reports:report-weight-change-child-girl' object.slug %}"
                class="list-group-item list-group-item-action">{% trans "WHO Weight Percentiles for Girls in kg" %}</a>
+            <a href="{% url 'reports:report-owlet-heart-rate-child' object.slug %}"
+               class="list-group-item list-group-item-action">{% trans "Owlet Heart Rate" %}</a>
+            <a href="{% url 'reports:report-owlet-oxygen-child' object.slug %}"
+               class="list-group-item list-group-item-action">{% trans "Owlet Oxygen Saturation" %}</a>
+            <a href="{% url 'reports:report-owlet-sleep-pattern-child' object.slug %}"
+               class="list-group-item list-group-item-action">{% trans "Owlet Sleep/Wake Pattern" %}</a>
+            <a href="{% url 'reports:report-owlet-sleep-totals-child' object.slug %}"
+               class="list-group-item list-group-item-action">{% trans "Owlet Sleep Totals" %}</a>
         </div>
     </div>
 {% endblock %}

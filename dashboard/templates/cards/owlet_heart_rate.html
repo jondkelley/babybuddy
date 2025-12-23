@@ -1,0 +1,58 @@
+{% extends 'cards/base.html' %}
+{% load duration i18n %}
+{% block header %}
+    <a href="{% url "owlet:settings-list" %}">{% trans "Owlet Heart Rate" %}</a>
+{% endblock %}
+{% block title %}
+    {% if reading %}
+        {% if stale %}
+            <style>
+                @keyframes stale-blink {
+                    0%, 49% { opacity: 1; }
+                    50%, 99% { opacity: 0.3; }
+                }
+                .stale-indicator {
+                    animation: stale-blink 2s infinite;
+                }
+            </style>
+            <div class="text-danger stale-indicator">
+                <strong>{% trans "STALE" %}</strong>
+            </div>
+        {% endif %}
+    {% else %}
+        {% trans "No readings yet" %}
+    {% endif %}
+{% endblock %}
+{% block content %}
+    {% if reading %}
+        <div class="text-center {% if alert %}owlet-alert-blink{% endif %}" style="padding: 20px;">
+            <div style="font-size: 3rem; font-weight: bold; {% if alert %}color: #dc3545;{% endif %}">
+                <i class="icon-heart" aria-hidden="true"></i>
+                {% if reading.heart_rate_bpm %}
+                    {{ reading.heart_rate_bpm|floatformat:0 }}
+                {% else %}
+                    --
+                {% endif %}
+            </div>
+            <div style="font-size: 1.2rem; margin-top: 10px;">
+                <strong>{% trans "bpm" %}</strong>
+            </div>
+            {% if is_awake is not None %}
+                <div style="margin-top: 15px; font-size: 0.9rem;" class="text-muted">
+                    {% if is_awake %}
+                        <i class="icon-eye" aria-hidden="true"></i> {% trans "Awake" %}
+                    {% else %}
+                        <i class="icon-moon" aria-hidden="true"></i> {% trans "Sleeping" %}
+                    {% endif %}
+                </div>
+            {% endif %}
+            {% if alert %}
+                <div style="margin-top: 10px; font-size: 0.9rem; color: #dc3545;">
+                    <strong>⚠️ {% trans "Out of normal range for age" %}</strong>
+                </div>
+            {% endif %}
+        </div>
+    {% else %}
+        <p class="text-muted">{% trans "No Owlet device configured for this child." %}</p>
+    {% endif %}
+{% endblock %}

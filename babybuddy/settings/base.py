@@ -28,6 +28,7 @@ load_dotenv(find_dotenv())
 ALLOWED_HOSTS = [x.strip() for x in os.environ.get("ALLOWED_HOSTS", "*").split(",")]
 SECRET_KEY = os.environ.get("SECRET_KEY") or None
 DEBUG = bool(strtobool(os.environ.get("DEBUG") or "False"))
+OWLET_POLL_TOKEN = os.environ.get("OWLET_POLL_TOKEN")
 
 # Applications
 # https://docs.djangoproject.com/en/5.0/ref/applications/
@@ -36,6 +37,7 @@ INSTALLED_APPS = [
     "api",
     "babybuddy.apps.BabyBuddyConfig",
     "core.apps.CoreConfig",
+    "owlet.apps.OwletConfig",
     "corsheaders",
     "dashboard",
     "reports",

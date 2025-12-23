@@ -10,4 +10,16 @@
 {% block content %}
     <h1>{% trans "Site Settings" %}</h1>
     {% include 'babybuddy/form.html' %}
+    
+    <hr class="my-4">
+    
+    <h2>{% trans "Additional Settings" %}</h2>
+    <div class="list-group">
+        <a href="{% url 'owlet:settings-list' %}" class="list-group-item list-group-item-action">
+            <div class="d-flex w-100 justify-content-between">
+                <h5 class="mb-1">{% trans "Owlet Settings" %}</h5>
+            </div>
+            <p class="mb-1">{% trans "Configure Owlet smart sock accounts and device mappings" %}</p>
+        </a>
+    </div>
 {% endblock %}

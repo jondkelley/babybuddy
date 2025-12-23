@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from django.shortcuts import get_object_or_404
 
-from rest_framework import viewsets, views
+from rest_framework import viewsets, views, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.schemas.openapi import AutoSchema
@@ -10,6 +10,11 @@ from core import models
 from babybuddy import models as babybuddy_models
 
 from . import serializers, filters
+from django.conf import settings
+import asyncio
+from babybuddy.services.owlet_poll import poll_all
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 
 
 class BMIViewSet(viewsets.ModelViewSet):
@@ -163,3 +168,25 @@ class ProfileView(views.APIView):
         )
         serializer = self.serializer_class(settings)
         return Response(serializer.data)
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class OwletPollView(views.APIView):
+    schema = AutoSchema(operation_id_base="OwletPoll")
+    authentication_classes: list = []
+    permission_classes: list = []
+
+    def post(self, request):
+        secret = request.headers.get("X-Owlet-Poll-Token") or request.headers.get("X-OWLET-POLL-TOKEN")
+        expected = getattr(settings, "OWLET_POLL_TOKEN", None)
+        if not expected or secret != expected:
+            return Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
+        # Run the async poller synchronously
+        try:
+            # Run the synchronous poller to avoid ORM-in-async-context errors
+            from babybuddy.services.owlet_poll import poll_all_sync
+            result = poll_all_sync()
+            return Response(result)
+        except Exception as e:
+            # Surface error details to help diagnose 500s during setup
+            return Response({"detail": "Owlet poll failed", "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

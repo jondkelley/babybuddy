@@ -62,6 +62,7 @@ router.register(r"tummy-times", views.TummyTimeViewSet)
 router.register(r"weight", views.WeightViewSet)
 
 router.add_detail_path("profile", "profile", views.ProfileView.as_view())
+router.add_detail_path("owlet/poll", "owlet-poll", views.OwletPollView.as_view())
 router.add_detail_path(
     "schema",
     "openapi-schema",

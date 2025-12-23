@@ -41,3 +41,20 @@
 .page-link-icon {
     padding: var(--bs-pagination-padding-y) calc(var(--bs-pagination-padding-x) / 1.75);
 }
+
+// Owlet alert blinking animation
+@keyframes owlet-blink {
+    0%, 49% {
+        background-color: #dc3545;
+        opacity: 1;
+    }
+    50%, 100% {
+        background-color: transparent;
+        opacity: 0.7;
+    }
+}
+
+.owlet-alert-blink {
+    animation: owlet-blink 1s infinite;
+    border-radius: 0.25rem;
+}
