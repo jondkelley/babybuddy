@@ -1,0 +1,29 @@
+{% extends 'babybuddy/page.html' %}
+{% load i18n %}
+{% block title %}{% trans "Owlet Settings" %}{% endblock %}
+{% block breadcrumbs %}
+<li class="breadcrumb-item fw-bold">{% trans "Owlet Settings" %}</li>
+{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-end mb-3">
+  <a class="btn btn-primary" href="{% url 'owlet:account-create' %}">{% trans "Add Owlet Account" %}</a>
+</div>
+
+<table class="table">
+  <thead>
+    <tr><th>{% trans 'Email' %}</th><th>{% trans 'Region' %}</th><th>{% trans 'Active' %}</th><th></th></tr>
+  </thead>
+  <tbody>
+    {% for a in accounts %}
+      <tr>
+        <td>{{ a.email }}</td>
+        <td>{{ a.region }}</td>
+        <td>{{ a.active }}</td>
+        <td><a class="btn btn-sm btn-outline-primary" href="{% url 'owlet:device-map' a.id %}">{% trans 'Map Devices' %}</a></td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="4" class="text-muted">{% trans 'No Owlet accounts added yet.' %}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

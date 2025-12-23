@@ -1,0 +1,100 @@
+{% extends 'babybuddy/page.html' %}
+{% load i18n owlet_extras %}
+{% block title %}{% trans "Map Owlet Devices" %}{% endblock %}
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'owlet:settings-list' %}">{% trans "Owlet Settings" %}</a></li>
+<li class="breadcrumb-item fw-bold">{% trans "Map Devices" %}</li>
+{% endblock %}
+{% block content %}
+<h5 class="mb-3">{{ account.email }} ({{ account.region }})</h5>
+<table class="table">
+  <thead>
+    <tr>
+      <th>{% trans 'DSN' %}</th>
+      <th>{% trans 'Name' %}</th>
+      <th>{% trans 'Child' %}</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for d in devices %}
+    <tr>
+      <td>{{ d.dsn }}</td>
+      <td>{{ d.name }}</td>
+      <td>
+        <form method="post" class="d-flex">
+          {% csrf_token %}
+          <input type="hidden" name="device_id" value="{{ d.id }}" />
+          <select name="child_id" class="form-select form-select-sm" style="max-width: 220px;">
+            <option value="">— {% trans 'Unmapped' %} —</option>
+            {% for c in children %}
+            <option value="{{ c.id }}" {% if d.child and d.child.id == c.id %}selected{% endif %}>{{ c }}</option>
+            {% endfor %}
+          </select>
+          <button type="submit" class="btn btn-sm btn-primary ms-2">{% trans 'Save' %}</button>
+        </form>
+      </td>
+      <td>
+        {% if d.child %}
+          <a class="btn btn-sm btn-outline-secondary" href="{% url 'core:child' d.child.slug %}">{% trans 'View Child' %}</a>
+        {% endif %}
+      </td>
+    </tr>
+    {% empty %}
+      <tr><td colspan="4" class="text-muted">{% trans 'No devices discovered yet. Poll once to populate.' %}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<hr class="my-4">
+
+<h5 class="mb-3">{% trans "Telemetry Data" %}</h5>
+{% for d in devices %}
+  <div class="card mb-3">
+    <div class="card-header">
+      <strong>{{ d.name }}</strong> ({{ d.dsn }})
+    </div>
+    <div class="card-body">
+      {% with reading=device_readings|get_item:d.id %}
+        {% if reading %}
+          <p class="mb-2">
+            <strong>{% trans "Last Update" %}:</strong>
+            {{ reading.recorded_at|date:"Y-m-d H:i:s" }}
+            <span class="text-muted">({{ reading.recorded_at|timesince }} ago)</span>
+          </p>
+          <div class="table-responsive">
+            <table class="table table-sm table-bordered">
+              <thead>
+                <tr>
+                  <th>{% trans "Heart Rate" %}</th>
+                  <th>{% trans "Oxygen" %}</th>
+                  <th>{% trans "Movement" %}</th>
+                  <th>{% trans "Movement Baseline" %}</th>
+                  <th>{% trans "Battery" %}</th>
+                  <th>{% trans "Signal Quality" %}</th>
+                  <th>{% trans "Charging" %}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>{% if reading.heart_rate_bpm %}{{ reading.heart_rate_bpm|floatformat:0 }} bpm{% else %}<span class="text-muted">--</span>{% endif %}</td>
+                  <td>{% if reading.oxygen_saturation_pct %}{{ reading.oxygen_saturation_pct|floatformat:0 }}%{% else %}<span class="text-muted">--</span>{% endif %}</td>
+                  <td>{% if reading.movement_value is not None %}{{ reading.movement_value }}{% else %}<span class="text-muted">--</span>{% endif %}</td>
+                  <td>{% if reading.movement_baseline is not None %}{{ reading.movement_baseline }}{% else %}<span class="text-muted">--</span>{% endif %}</td>
+                  <td>{% if reading.battery_pct %}{{ reading.battery_pct|floatformat:0 }}%{% else %}<span class="text-muted">--</span>{% endif %}</td>
+                  <td>{% if reading.signal_quality %}{{ reading.signal_quality }}{% else %}<span class="text-muted">--</span>{% endif %}</td>
+                  <td>{% if reading.charging %}<span class="badge bg-success">{% trans "Yes" %}</span>{% else %}<span class="badge bg-secondary">{% trans "No" %}</span>{% endif %}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="text-muted mb-0">{% trans "No telemetry data available" %}</p>
+        {% endif %}
+      {% endwith %}
+    </div>
+  </div>
+{% empty %}
+  <p class="text-muted">{% trans "No devices to display telemetry for." %}</p>
+{% endfor %}
+{% endblock %}
