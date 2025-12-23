@@ -1,0 +1,91 @@
+
+import asyncio
+import os
+from pyowletapi.api import OwletAPI
+
+async def get_owlet_data():
+    # Get credentials from environment variables
+    username = os.environ.get("OWLET_USERNAME")
+    password = os.environ.get("OWLET_PASSWORD")
+
+    if not username or not password:
+        print("OWLET_USERNAME and OWLET_PASSWORD environment variables must be set.")
+        return
+
+    # Monkey-patch the OwletAPI class
+    async def aenter(self):
+        await self.authenticate()
+        return self
+
+    async def aexit(self, exc_type, exc, tb):
+        await self.close()
+
+    async def get_live_values(self, dsn):
+        properties = await self.get_properties(dsn)
+        print('DEBUG: properties from get_properties:', properties)
+        resp = properties.get('response', properties)
+
+        # If response is a list, search for REAL_TIME_VITALS dict
+        if isinstance(resp, list):
+            for entry in resp:
+                if 'REAL_TIME_VITALS' in entry:
+                    vitals = entry['REAL_TIME_VITALS']
+                    break
+            else:
+                raise Exception('REAL_TIME_VITALS key not found in response list')
+        elif isinstance(resp, dict):
+            if 'REAL_TIME_VITALS' in resp:
+                vitals = resp['REAL_TIME_VITALS']
+            else:
+                raise Exception('REAL_TIME_VITALS key not found in response dict')
+        else:
+            raise Exception('Unexpected response type: %s' % type(resp))
+
+        if isinstance(vitals, dict) and 'value' in vitals:
+            return vitals['value']
+        else:
+            raise Exception('Could not extract value for REAL_TIME_VITALS: ' + str(vitals))
+
+    OwletAPI.__aenter__ = aenter
+    OwletAPI.__aexit__ = aexit
+    OwletAPI.get_live_values = get_live_values
+
+    async with OwletAPI("world", username, password) as owlet:
+        # Get all devices
+        devices = await owlet.get_devices()
+        print(devices)
+
+        # Handle response wrapping
+        if isinstance(devices, dict) and 'response' in devices:
+            resp = devices['response']
+        elif isinstance(devices, list) and len(devices) > 0 and 'response' in devices[0]:
+            resp = devices[0]['response']
+        else:
+            resp = devices
+
+        # Most likely resp is a list of device dicts
+        if isinstance(resp, list) and resp:
+            device = resp[0].get('device', resp[0])
+        elif isinstance(resp, dict) and 'device' in resp:
+            device = resp['device']
+        elif isinstance(resp, dict):
+            device = resp
+        else:
+            print("Could not parse devices structure:", devices)
+            return
+
+        if not device or not device.get("dsn"):
+            print("No device with 'dsn' found:", device)
+            return
+
+        # Get live values
+        try:
+            live_values = await owlet.get_live_values(device['dsn'])
+            print(f"Heart Rate (BPM): {live_values['heart_rate']}")
+            print(f"Oxygen Level: {live_values['oxygen_level']}%")
+        except Exception as e:
+            print(f"Could not get live values: {e}")
+
+
+if __name__ == "__main__":
+    asyncio.run(get_owlet_data())
